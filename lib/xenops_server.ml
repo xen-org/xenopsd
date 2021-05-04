@@ -2717,12 +2717,13 @@ module VBD = struct
   let string_of_id (a, b) = a ^ "." ^ b
 
   let add' x =
-    debug "VBD.add %s %s" (string_of_id x.id) (Jsonrpc.to_string (rpc_of t x)) ;
-    (* Only if the corresponding VM actually exists *)
+    let dom0 = Inventory.lookup Inventory._control_domain_uuid in
     let vm = DB.vm_of x.id in
     if not (VM_DB.exists vm) then (
-      debug "VM %s not managed by me" vm ;
-      raise (Xenopsd_error (Does_not_exist ("VM", vm)))
+      if not (vm = dom0) then (
+        debug "VM %s not managed by me" vm ;
+        raise (Xenopsd_error (Does_not_exist ("VM", vm)))
+      )
     ) ;
     DB.write x.id x ;
     x.id
